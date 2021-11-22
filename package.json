@@ -1,0 +1,16 @@
+{
+  "name": "discord-js-bot",
+  "version": "1.0.0",
+  "description": "A discord bot made using discord.js for Advent of Code 2021 server",
+  "main": "index.js",
+  "author": "brisdalen",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "@discordjs/builders": "^0.8.2",
+    "@discordjs/rest": "^0.1.0-canary.0",
+    "discord-api-types": "^0.24.0",
+    "discord.js": "^13.3.1",
+    "node-schedule": "^2.0.0"
+  }
+}
