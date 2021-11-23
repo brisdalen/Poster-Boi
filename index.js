@@ -1,42 +1,59 @@
 // Require the necessary discord.js classes
-const { Client, Intents } = require('discord.js');
-const { token, guildId, discussionsCategoryId, solutionsCategoryId } = require('./config.json');
-
-const schedule = require('node-schedule');
-const rule = new schedule.RecurrenceRule();
-rule.tz = 'Etc/UTC';
-rule.hour = 5
-rule.minute = 0
-rule.second = 0
+const { Client, Intents, MessageEmbed } = require('discord.js');
+const { token, guildId, discussionsCategoryId, solutionsCategoryId, listenerRoleId, modRoleId } = require('./config.json');
 
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
+function createDiscussionMessage(day, solutionChannel) {
+    let url = `https://adventofcode.com/2020/day/${day}`;
+    return new MessageEmbed()
+        .setTitle(`Dag ${day}`)
+        .setURL(url)
+        .setDescription(`Da er utfordringene for dag ${day} publisert! ${url}
+        Lykke til, og publiser gjerne løsningene dine i ${solutionChannel} om du vil når du er ferdig!:)`)
+        .setTimestamp();
+}
+
 // When the client is ready, run this code (only once)
-client.once('ready', () => {
+client.once('ready', async () => {
     client.user.setActivity('Advent of Code 2021', { type: 'WATCHING' })
-    let guildPromise = client.guilds.fetch(guildId);
-    console.log('Ready!');
+    // Fetch guild as well as dicussion and solution categories
+    try {
+        let guild = await client.guilds.fetch(guildId);
+        let discussions = await guild.channels.fetch(discussionsCategoryId);
+        let solutions = await guild.channels.fetch(solutionsCategoryId);
 
-    guildPromise.then(guild => {
-        // Fetch discussions category
-        let discussions = guild.channels.fetch(discussionsCategoryId);
-            //.then(channel => console.log(`The channel name is: ${channel.name}`))
-            //.catch(console.error);
+        console.log(discussions.name);
+        console.log(solutions.name);
 
-        // Fetch solutions category
-        let solutions = guild.channels.fetch(solutionsCategoryId);
-            //.then(channel => console.log(`The channel name is: ${channel.name}`))
-            //.catch(console.error);
+        const schedule = require('node-schedule');
+        const rule = new schedule.RecurrenceRule();
+        rule.tz = 'Etc/UTC';
+        rule.hour = 5
+        rule.minute = 0
 
-        discussions.then(d => {
-            console.log(d.name);
-        }).catch(console.error);
-    });
-});
+        const job = schedule.scheduleJob(rule, async () => {
+            console.log("Shceduled job ran");
+            //console.log(`This would be a new challenge! ${new Date().toUTCString()}`);
+            let date = new Date();
 
-const job = schedule.scheduleJob(rule, () => {
-    console.log(new Date().toUTCString());
+            let newDiscussionChannel = await discussions.createChannel(`day-${date.getDate()}-diskusjon`, {});
+            newDiscussionChannel.setPosition(0);
+            let newSolutionChannel = await solutions.createChannel(`day-${date.getDate()}-løsninger`, {});
+            newSolutionChannel.setPosition(0);
+
+            guild.roles.fetch(listenerRoleId)
+                // todo before dec 1, construct correct solution channel-message and set the rules to only post in december
+                .then(listener => {
+                    newDiscussionChannel.send({ embeds: [createDiscussionMessage(date.getDate(), newSolutionChannel)]});
+                    newDiscussionChannel.send(`${listener}`);
+                    newSolutionChannel.send(`Test message for ${listener}, 1 2 3`)
+                });
+        });
+    } catch (err) {
+        console.error("Error during inital fetch: " + err);
+    }
 });
 
 // Login to Discord with your client's config
