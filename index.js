@@ -32,7 +32,7 @@ client.once('ready', async () => {
         rule.month = 11;
         rule.day = [schedule.Range(1, 28)];
         rule.hour = 5;
-        rule.minute = 1;
+        rule.minute = 2;
         rule.second = 0;
 
         const job = schedule.scheduleJob(rule, async () => {
