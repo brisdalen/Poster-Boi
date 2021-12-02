@@ -26,13 +26,14 @@ client.once('ready', async () => {
         const solutions = await guild.channels.fetch(solutionsCategoryId);
 
         // The daily challenges are posted at 05:00 UTC+0, so create new channels at this time every day
+        // note, RecurrenceRule month is 0-11 unlike cron-parse 
         const schedule = require('node-schedule');
         const rule = new schedule.RecurrenceRule();
         rule.tz = 'Etc/UTC';
         rule.month = 11;
-        rule.day = [schedule.Range(1, 28)];
+        rule.day = [schedule.Range(1, 25)];
         rule.hour = 5;
-        rule.minute = 2;
+        rule.minute = 1;
         rule.second = 0;
 
         const job = schedule.scheduleJob(rule, async () => {
